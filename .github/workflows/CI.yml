@@ -2,12 +2,12 @@ name: CI
 on:
   push:
     branches:
-      - 'main'
+      - 'master'
       - 'dev'
     tags: '*'
   pull_request:
     branches:
-      - 'main'
+      - 'master'
   release:
     types: [published]
 

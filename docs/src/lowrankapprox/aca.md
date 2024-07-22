@@ -152,18 +152,3 @@ FastBEAST.ModifiedFillDistance
 FastBEAST.ModifiedFillDistance(pos::Vector{SVector{3, F}}) where F <: Real
 ``` 
 
-#### MRF Pivoting
-The MRF pivoting strategy is an adaptive approach comprising the [standard partial pivoting](@ref standardpiv), the [modified fill-distance pivoting](@ref MFDPivoting), and a random sampling pivoting, where the active strategy is selected based on which criterion of the [combined convergence criterion](@ref CCC) is met (details can be found in [[4]](@ref refs)). 
-
-```@raw html
-<div align="center">
-<img src="../../assets/algorithmhz.svg" width="responsive-image"/>
-</div>
-<br/>
-```
-
-##### API
-```@docs
-FastBEAST.MRFPivoting
-FastBEAST.MRFPivoting(pos::Vector{SVector{I, F}}) where {I, F}
-``` 
