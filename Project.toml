@@ -1,7 +1,7 @@
 name = "FastBEAST"
 uuid = "3fccbda2-992b-41a0-8fae-2b833e1e73d8"
 authors = ["Simon B. Adrian <simon.adrian@ieee.org> and contributors"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 BEAST = "bb4162c7-ba94-5a20-af32-d8ec4428bdd1"
