@@ -19,5 +19,5 @@ The following aspects are implemented (✔) and planned (⌛):
 - ⌛ CUR matrix approximation 
 
 ## Documentation
-- Documentation for the [latest stable version](https://sbadrian.github.io/FastBEAST.jl/stable/).
-- Documentation for the [development version](https://sbadrian.github.io/FastBEAST.jl/dev/).
+- Documentation for the [latest stable version](https://FastBEAST.github.io/FastBEAST.jl/stable/).
+- Documentation for the [development version](https://FastBEAST.github.io/FastBEAST.jl/dev/).
