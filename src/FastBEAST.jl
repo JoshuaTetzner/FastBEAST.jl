@@ -10,12 +10,19 @@ include("aca/pivoting.jl")
 include("aca/convergence.jl")
 include("aca/aca.jl")
 include("skeletons.jl")
+include("blockassembler.jl")
+include("blockcompressor.jl")
 include("hmatrix.jl")
 include("utils.jl")
 include("fmm.jl")
 include("beast.jl")
 include("fmm/operators/FMMoperator.jl")
 
+#include("h2matrix/h2matrix.jl")
+#include("h2matrix/fars.jl")
+
+include("blockassembler/galerkinblkassembler.jl")
+include("blockassembler/petrovgalerkinblkassembler.jl")
 
 export KMeansTreeOptions
 export BoxTreeOptions
@@ -27,6 +34,8 @@ export aca, allocate_aca_memory
 export LazyMatrix
 
 export MatrixBlock, LowRankMatrix
+
+export assemblefullblocks
 
 export HMatrix
 export buildhmatrix

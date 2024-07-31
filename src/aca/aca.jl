@@ -175,7 +175,11 @@ function aca(
 
         return A, B
     else
-        return am.U[1:maxrows, 1:am.npivots], am.V[1:am.npivots, 1:maxcolumns]
+        #return am.U[1:maxrows, 1:am.npivots], am.V[1:am.npivots, 1:maxcolumns]
+        return am.U[1:maxrows, 1:(am.npivots)],
+            am.V[1:(am.npivots), 1:maxcolumns], 
+            findall(x -> x, am.used_I),
+            findall(x -> x, am.used_J)
     end
 end
 

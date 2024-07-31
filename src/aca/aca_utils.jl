@@ -77,3 +77,16 @@ function allocate_aca_memory(
 
     return ACAGlobalMemory(U, V, used_I, used_J, real(K)(0.0), I(1))
 end
+
+function allocate_aca_memory(
+    ::Type{K}, maxrows::I, maxcolumns::I, multithreading::B; maxrank=40
+) where {I, B, K}
+    if multithreading
+        return [allocate_aca_memory(
+            K, maxrows, maxcolumns, maxrank=maxrank
+        ) for i = 1:Threads.nthreads()]   
+    else
+        return [allocate_aca_memory(K, maxrows, maxcolumns, maxrank=maxrank)]
+    end
+end
+

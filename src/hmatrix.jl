@@ -214,9 +214,6 @@ function HMatrix(
     
     fullcompressableinteractions = SVector{2}[]
     fullinteractions, compressableinteractions = computeinteractions(tree, η=η)
-    MBF = MatrixBlock{I, K, Matrix{K}}
-    fullrankblocks_perthread = Vector{MBF}[]
-    fullrankblocks = MBF[]
 
     rowdim = length(value(tree.test_cluster, 1))
     coldim = length(value(tree.trial_cluster, 1))
@@ -236,47 +233,15 @@ function HMatrix(
         length(compressableinteractions)
     )
 
-    if verbose
-        p = Progress(length(fullinteractions), desc="Computing full interactions: ")
-    end
-
-    if !multithreading
-        for fullinteraction in fullinteractions
-            push!(
-                fullrankblocks,
-                getfullmatrixview(
-                    matrixassembler,
-                    value(tree.test_cluster, fullinteraction[1]),
-                    value(tree.trial_cluster, fullinteraction[2]),
-                    I,
-                    K
-                )
-            )
-            verbose && next!(p)
-        end
-    elseif multithreading
-        for i in 1:Threads.nthreads()
-            push!(fullrankblocks_perthread, MBF[])
-        end
-
-        Threads.@threads for fullinteraction in fullinteractions
-            push!(
-                fullrankblocks_perthread[Threads.threadid()],
-                getfullmatrixview(
-                    matrixassembler,
-                    value(tree.test_cluster, fullinteraction[1]),
-                    value(tree.trial_cluster, fullinteraction[2]),
-                    I,
-                    K
-                )
-            )
-            verbose && next!(p)
-        end
-
-        for i in eachindex(fullrankblocks_perthread)
-            append!(fullrankblocks, fullrankblocks_perthread[i])
-        end
-    end
+    fullrankblocks = FastBEAST.assemblefullblocks(
+        tree,
+        fullinteractions,
+        matrixassembler,
+        K;
+        verbose=verbose,
+        multithreading=multithreading
+    )
+    
 
     MBL = MatrixBlock{I, K, LowRankMatrix{K}}
     lowrankblocks_perthread = Vector{MBL}[]
@@ -367,7 +332,7 @@ function HMatrix(
         end
     elseif multithreading
 
-        fulllowrankblocks_perthread = Vector{MBF}[]
+        fulllowrankblocks_perthread = Vector{MatrixBlock{I, K, Matrix{K}}}[]
 
         for i in 1:Threads.nthreads()
             push!(fulllowrankblocks_perthread, MBL[])
