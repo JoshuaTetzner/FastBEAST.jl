@@ -98,11 +98,39 @@ function (::Combined{I, F, K})(::Type{K}; factor=1.0, nsamples=0) where {I, F, K
     )
 end
 
+mutable struct BalancedCombined{I, F <: Real, K} <: ConvergenceCriterion
+    area::Tuple{Vector{F}, Vector{F}}
+    nsamples::I
+    factor::F
+    indices::Matrix{I}
+    rest::Matrix{K}
+end
+
+function BalancedCombined(::Type{K}, area::Tuple{Vector{F}, Vector{F}}; factor=1.0, nsamples=0) where {F, K}
+    return BalancedCombined(
+        area,
+        Int(ceil(nsamples*factor)),
+        factor,
+        zeros(Int, Int(ceil(nsamples*factor)), 2),
+        zeros(K, Int(ceil(nsamples*factor)), 1)
+    )
+end
+
+function (::BalancedCombined{I, F, K})(::Type{K}, area::Tuple{Vector{F}, Vector{F}}; factor=1.0, nsamples=0) where {I, F, K}
+    return BalancedCombined(
+        area,
+        Int(ceil(nsamples*factor)),
+        factor,
+        zeros(Int, Int(ceil(nsamples*factor)), 2),
+        zeros(K, Int(ceil(nsamples*factor)), 1)
+    )
+end
+
 function convergence!(
     tol::F,
     normUV::F,
     am::ACAGlobalMemory{I, F, K},
-    convcrit::Combined{I, F, K},
+    convcrit::Union{Combined{I, F, K}, BalancedCombined{I, F, K}},
     sizeM::I
 ) where {I, F <: Real, K}
 
@@ -116,6 +144,53 @@ function convergence!(
 
     return (sqrt(meanrest*sizeM) <= tol*sqrt(am.normUV²) && 
         normUV <= tol*sqrt(am.normUV²))
+end
+
+
+function balancedrandomsamples(area::Vector{F}, nsamples::I) where {I, F}
+    sarea = cumsum(area)./sum(area)
+    rvals = rand(nsamples)
+
+    indices = zeros(Int, nsamples)
+    for ind in eachindex(rvals)
+        indices[ind] = findfirst(x-> x > rvals[ind], sarea)
+    end
+end
+
+function initconvergence(
+    M::LazyMatrix{I, K},
+    convcrit::BalancedCombined{I, F, K},
+) where {I, F <: Real, K}
+
+    convcrit.nsamples > length(M.τ)*length(M.σ) && println("Conv. oversampled!")
+
+    if convcrit.nsamples == 0 
+        convcrit = convcrit(
+            K, 
+            area,
+            factor=convcrit.factor, 
+            nsamples=Int(ceil((size(M)[1] + size(M)[2])*convcrit.factor))
+        )
+    else
+        convcrit = convcrit(
+            K, 
+            area, 
+            factor=convcrit.factor, 
+            nsamples=Int(round((convcrit.nsamples*convcrit.factor)))
+        )
+    end
+
+    convcrit.indices[1:convcrit.nsamples, 1] = balancedrandomsamples(area[1], nsamples)
+    convcrit.indices[1:convcrit.nsamples, 2] = balancedrandomsamples(area[2], nsamples)
+    for ind in eachindex(convcrit.rest)
+        @views M.μ(
+            convcrit.rest[ind:ind, 1:1], 
+            M.τ[convcrit.indices[ind, 1]:convcrit.indices[ind, 1]],
+            M.σ[convcrit.indices[ind, 2]:convcrit.indices[ind, 2]]
+        )
+    end
+
+    return convcrit
 end
 
 """ 

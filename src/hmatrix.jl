@@ -2,9 +2,9 @@ using LinearAlgebra
 using LinearMaps
 using ProgressMeter
 
-struct HMatrix{I, K} <: LinearMaps.LinearMap{K}
-    fullrankblocks::Vector{MatrixBlock{I, K, Matrix{K}}}
-    lowrankblocks::Vector{MatrixBlock{I, K, LowRankMatrix{K}}}
+struct HMatrix{I,K} <: LinearMaps.LinearMap{K}
+    fullrankblocks::Vector{MatrixBlock{I,K,Matrix{K}}}
+    lowrankblocks::Vector{MatrixBlock{I,K,LowRankMatrix{K}}}
     rowdim::I
     columndim::I
     nnz::I
@@ -12,12 +12,12 @@ struct HMatrix{I, K} <: LinearMaps.LinearMap{K}
     ismultithreaded::Bool
 end
 
-function nnzs(hmat::HT) where HT <: HMatrix
+function nnzs(hmat::HT) where {HT<:HMatrix}
     return hmat.nnz
 end
 
-function compressionrate(hmat::HT) where HT <: HMatrix
-    fullsize = hmat.rowdim*hmat.columndim
+function compressionrate(hmat::HT) where {HT<:HMatrix}
+    fullsize = hmat.rowdim * hmat.columndim
     nonzero = 0
     for lrb in hmat.lowrankblocks
         nonzero += length(lrb.M.U) + length(lrb.M.V)
@@ -25,11 +25,11 @@ function compressionrate(hmat::HT) where HT <: HMatrix
     for frb in hmat.fullrankblocks
         nonzero += length(frb.M)
     end
-    return nonzero/fullsize
+    return nonzero / fullsize
 end
 
 # Returns storage in GB, assuming 64 bit representations.
-function storage(hmat::HT) where HT <: HMatrix
+function storage(hmat::HT) where {HT<:HMatrix}
     nonzero = 0
     for lrb in hmat.lowrankblocks
         nonzero += length(lrb.M.U) + length(lrb.M.V)
@@ -37,11 +37,11 @@ function storage(hmat::HT) where HT <: HMatrix
     for frb in hmat.fullrankblocks
         nonzero += length(frb.M)
     end
-    return (nonzero*64)/8 * 10^-9
+    return (nonzero * 64) / 8 * 10^-9
 end
 
 
-function ismultithreaded(hmat::HT) where HT <: HMatrix
+function ismultithreaded(hmat::HT) where {HT<:HMatrix}
     return hmat.ismultithreaded
 end
 
@@ -74,19 +74,19 @@ end=#
     LinearMaps.check_dim_mul(y, A, x)
 
     fill!(y, zero(eltype(y)))
-    
+
     if !ismultithreaded(A)
 
         c = zeros(eltype(y), size(A, 1))
 
         for mb in A.fullrankblocks
-            mul!(c[1:size(mb.M,1)], mb.M, x[mb.σ])
-            y[mb.τ] .+= c[1:size(mb.M,1)]
+            mul!(c[1:size(mb.M, 1)], mb.M, x[mb.σ])
+            y[mb.τ] .+= c[1:size(mb.M, 1)]
         end
-        
+
         for mb in A.lowrankblocks
             mul!(c[1:size(mb.M, 1)], mb.M, x[mb.σ])
-            y[mb.τ] .+= c[1:size(mb.M,1)]
+            y[mb.τ] .+= c[1:size(mb.M, 1)]
         end
 
     else
@@ -94,13 +94,13 @@ end=#
         yy = zeros(eltype(y), size(A, 1), Threads.nthreads())
 
         Threads.@threads for mb in A.fullrankblocks
-            mul!(cc[1:size(mb.M,1), Threads.threadid()], mb.M, x[mb.σ])
-            yy[mb.τ, Threads.threadid()] .+= cc[1:size(mb.M,1), Threads.threadid()]
+            mul!(cc[1:size(mb.M, 1), Threads.threadid()], mb.M, x[mb.σ])
+            yy[mb.τ, Threads.threadid()] .+= cc[1:size(mb.M, 1), Threads.threadid()]
         end
-        
+
         Threads.@threads for mb in A.lowrankblocks
             mul!(cc[1:size(mb.M, 1), Threads.threadid()], mb.M, x[mb.σ])
-            yy[mb.τ, Threads.threadid()] .+= cc[1:size(mb.M,1), Threads.threadid()]
+            yy[mb.τ, Threads.threadid()] .+= cc[1:size(mb.M, 1), Threads.threadid()]
         end
 
         y[:] = sum(yy, dims=2)
@@ -121,7 +121,7 @@ end
 
     if !ismultithreaded(transA.lmap)
 
-        c = zeros(eltype(y), size(transA,1))
+        c = zeros(eltype(y), size(transA, 1))
 
         for mb in transA.lmap.fullrankblocks
             mul!(c[1:size(mb.M, 2)], transpose(mb.M), x[mb.τ])
@@ -129,8 +129,8 @@ end
         end
 
         for mb in transA.lmap.lowrankblocks
-            mul!(c[1:size(mb.M,2)], transpose(mb.M), x[mb.τ])
-            y[mb.σ] .+= c[1:size(mb.M,2)]
+            mul!(c[1:size(mb.M, 2)], transpose(mb.M), x[mb.τ])
+            y[mb.σ] .+= c[1:size(mb.M, 2)]
         end
 
     else
@@ -142,7 +142,7 @@ end
             mul!(cc[1:size(mb.M, 2), Threads.threadid()], transpose(mb.M), x[mb.τ])
             yy[mb.σ, Threads.threadid()] .+= cc[1:size(mb.M, 2), Threads.threadid()]
         end
-        
+
         Threads.@threads for mb in transA.lmap.lowrankblocks
             mul!(cc[1:size(mb.M, 2), Threads.threadid()], transpose(mb.M), x[mb.τ])
             yy[mb.σ, Threads.threadid()] .+= cc[1:size(mb.M, 2), Threads.threadid()]
@@ -166,16 +166,16 @@ end
 
     if !ismultithreaded(transA.lmap)
 
-        c = zeros(eltype(y), size(transA,1))
+        c = zeros(eltype(y), size(transA, 1))
 
         for mb in transA.lmap.fullrankblocks
-            mul!(c[1:size(adjoint(mb.M),1)], adjoint(mb.M), x[mb.τ])
+            mul!(c[1:size(adjoint(mb.M), 1)], adjoint(mb.M), x[mb.τ])
             y[mb.σ] .+= c[1:size(mb.M, 2)]
         end
 
         for mb in transA.lmap.lowrankblocks
-            mul!(c[1:size(adjoint(mb.M),1)], adjoint(mb.M), x[mb.τ])
-            y[mb.σ] .+= c[1:size(mb.M,2)]
+            mul!(c[1:size(adjoint(mb.M), 1)], adjoint(mb.M), x[mb.τ])
+            y[mb.σ] .+= c[1:size(mb.M, 2)]
         end
 
     else
@@ -187,7 +187,7 @@ end
             mul!(cc[1:size(mb.M, 2), Threads.threadid()], adjoint(mb.M), x[mb.τ])
             yy[mb.σ, Threads.threadid()] .+= cc[1:size(mb.M, 2), Threads.threadid()]
         end
-        
+
         Threads.@threads for mb in transA.lmap.lowrankblocks
             mul!(cc[1:size(mb.M, 2), Threads.threadid()], adjoint(mb.M), x[mb.τ])
             yy[mb.σ, Threads.threadid()] .+= cc[1:size(mb.M, 2), Threads.threadid()]
@@ -206,12 +206,12 @@ function HMatrix(
     ::Type{I},
     ::Type{K};
     farmatrixassembler=matrixassembler,
-    compressor=ACAOptions(),
+    compressor=ACAOptions(tol=1e-4),
     multithreading=false,
     verbose=false,
-    η=0.5
-) where {I, K, T}
-    
+    η=1.0
+) where {I,K,T}
+
     fullcompressableinteractions = SVector{2}[]
     fullinteractions, compressableinteractions = computeinteractions(tree, η=η)
 
@@ -221,7 +221,7 @@ function HMatrix(
     if !multithreading
         am = allocate_aca_memory(K, rowdim, coldim, maxrank=compressor.maxrank)
     else
-        ams = ACAGlobalMemory{I, real(K), K}[]
+        ams = ACAGlobalMemory{I,real(K),K}[]
         for i in 1:Threads.nthreads()
             push!(ams, allocate_aca_memory(K, rowdim, coldim, maxrank=compressor.maxrank))
         end
@@ -232,8 +232,8 @@ function HMatrix(
         "Number of compressable interactions: ",
         length(compressableinteractions)
     )
-
-    fullrankblocks = FastBEAST.assemblefullblocks(
+    println("fullinteractions")
+    @time fullrankblocks = FastBEAST.assemblefullblocks(
         tree,
         fullinteractions,
         matrixassembler,
@@ -241,21 +241,21 @@ function HMatrix(
         verbose=verbose,
         multithreading=multithreading
     )
-    
 
-    MBL = MatrixBlock{I, K, LowRankMatrix{K}}
+
+    MBL = MatrixBlock{I,K,LowRankMatrix{K}}
     lowrankblocks_perthread = Vector{MBL}[]
     lowrankblocks = MBL[]
 
     if verbose
         p = Progress(length(compressableinteractions), desc="Compressing far interactions: ")
     end
-
-    if !multithreading
+    println("compressableinteractions")
+    @time if !multithreading
         for level in compressableinteractions
             for compressableinteraction in level
                 push!(
-                    lowrankblocks, 
+                    lowrankblocks,
                     getcompressedmatrix(
                         farmatrixassembler,
                         value(tree.test_cluster, compressableinteraction[1]),
@@ -301,12 +301,12 @@ function HMatrix(
 
     correctionindices = []
     for (ind, lbk) in enumerate(lowrankblocks)
-        maxrowcols = Int(floor(length(lbk.τ)*length(lbk.σ)/(length(lbk.τ)+length(lbk.σ))))
+        maxrowcols = Int(floor(length(lbk.τ) * length(lbk.σ) / (length(lbk.τ) + length(lbk.σ))))
 
         if maxrowcols <= size(lbk.M.U)[2] || size(lbk.M.U)[2] == compressor.maxrank
             push!(fullcompressableinteractions, SVector(lbk.τ, lbk.σ))
             push!(correctionindices, ind)
-        end 
+        end
     end
     deleteat!(lowrankblocks, correctionindices)
 
@@ -319,7 +319,7 @@ function HMatrix(
     if !multithreading
         for fullcompressableinteraction in fullcompressableinteractions
             push!(
-                fullrankblocks, 
+                fullrankblocks,
                 getfulllowrankmatrixview(
                     matrixassembler,
                     fullcompressableinteraction[1],
@@ -332,7 +332,7 @@ function HMatrix(
         end
     elseif multithreading
 
-        fulllowrankblocks_perthread = Vector{MatrixBlock{I, K, Matrix{K}}}[]
+        fulllowrankblocks_perthread = Vector{MatrixBlock{I,K,Matrix{K}}}[]
 
         for i in 1:Threads.nthreads()
             push!(fulllowrankblocks_perthread, MBL[])
@@ -357,7 +357,7 @@ function HMatrix(
         end
     end
 
-    return HMatrix{I, K}(
+    return HMatrix{I,K}(
         fullrankblocks,
         lowrankblocks,
         rowdim,
@@ -375,11 +375,11 @@ function getfullmatrixview(
     trialidcs,
     ::Type{I},
     ::Type{K};
-) where {I, K}
+) where {I,K}
     matrix = zeros(K, length(testidcs), length(trialidcs))
     matrixassembler(matrix, testidcs, trialidcs)
 
-    return MatrixBlock{I, K, Matrix{K}}(
+    return MatrixBlock{I,K,Matrix{K}}(
         matrix,
         testidcs,
         trialidcs
@@ -392,11 +392,11 @@ function getfulllowrankmatrixview(
     sourceind,
     ::Type{I},
     ::Type{K};
-) where {I, K}
+) where {I,K}
     matrix = zeros(K, length(testind), length(sourceind))
     matrixassembler(matrix, testind, sourceind)
 
-    return MatrixBlock{I, K, Matrix{K}}(
+    return MatrixBlock{I,K,Matrix{K}}(
         matrix,
         testind,
         sourceind
@@ -411,29 +411,29 @@ function getcompressedmatrix(
     ::Type{K},
     am;
     compressor=ACAOptions()
-) where {I, K}
+) where {I,K}
 
-        lm = LazyMatrix(matrixassembler, testidcs, trialidcs, K)
+    lm = LazyMatrix(matrixassembler, testidcs, trialidcs, K)
 
-        maxrank = compressor.maxrank
-        maxrank == 0 && Int(round(length(lm.τ)*length(lm.σ)/(length(lm.τ)+length(lm.σ))))
+    maxrank = compressor.maxrank
+    maxrank == 0 && Int(round(length(lm.τ) * length(lm.σ) / (length(lm.τ) + length(lm.σ))))
 
-        U, V = aca(
-            lm,
-            am;
-            rowpivstrat=compressor.rowpivstrat,
-            columnpivstrat=compressor.columnpivstrat,
-            convcrit=compressor.convcrit,
-            tol=compressor.tol,
-            svdrecompress=compressor.svdrecompress,
-            maxrank= maxrank
-        )
+    U, V = aca(
+        lm,
+        am;
+        rowpivstrat=compressor.rowpivstrat,
+        columnpivstrat=compressor.columnpivstrat,
+        convcrit=compressor.convcrit,
+        tol=compressor.tol,
+        svdrecompress=compressor.svdrecompress,
+        maxrank=maxrank
+    )
 
-        mbl = MatrixBlock{I, K, LowRankMatrix{K}}(
-            LowRankMatrix(U, V),
-            testidcs,
-            trialidcs
-        )
+    mbl = MatrixBlock{I,K,LowRankMatrix{K}}(
+        LowRankMatrix(U, V),
+        testidcs,
+        trialidcs
+    )
 
     return mbl
 end

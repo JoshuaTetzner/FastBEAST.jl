@@ -4,13 +4,13 @@ function hassemble(
     operator::BEAST.AbstractOperator,
     test_functions,
     trial_functions;
-    treeoptions=BoxTreeOptions(nmin=100),
+    treeoptions=BoxTreeOptions(),
     compressor=ACAOptions(),
-    quadstratcbk=BEAST.defaultquadstrat(operator, test_functions, trial_functions),
+    quadstratcbk=BEAST.DoubleNumQStrat(2, 2),
     quadstratfbk=BEAST.defaultquadstrat(operator, test_functions, trial_functions),
     multithreading=false,
     verbose=false,
-    η=1.5
+    η=1.0
 )
 
     @views blkasm = BEAST.blockassembler(

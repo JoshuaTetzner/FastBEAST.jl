@@ -36,7 +36,7 @@ end
     cc = zeros(eltype(y), size(A, 1), Threads.nthreads())
     yy = zeros(eltype(y), size(A, 1), Threads.nthreads())
 
-    @threads for mb in A.M
+    ThreadsX.foreach(A.M) do mb
         mul!(cc[1:size(mb.M, 1), Threads.threadid()], mb.M, x[mb.σ])
         yy[mb.τ, Threads.threadid()] .+= cc[1:size(mb.M,1), Threads.threadid()]
     end
@@ -59,7 +59,7 @@ end
     cc = zeros(eltype(y), size(transA, 1), Threads.nthreads())
     yy = zeros(eltype(y), size(transA, 1), Threads.nthreads())
 
-    @threads for mb in transA.lmap.M
+    ThreadsX.foreach(transA.lmap.nears) do mb
         mul!(cc[1:size(mb.M, 2), Threads.threadid()], transpose(mb.M), x[mb.τ])
         yy[mb.σ, Threads.threadid()] .+= cc[1:size(mb.M, 2), Threads.threadid()]
     end
@@ -81,7 +81,7 @@ end
     cc = zeros(eltype(y), size(transA, 1), Threads.nthreads())
     yy = zeros(eltype(y), size(transA, 1), Threads.nthreads())
 
-    @threads for mb in transA.lmap.M
+    ThreadsX.foreach(transA.lmap.nears) do mb
         mul!(cc[1:size(mb.M, 2), Threads.threadid()], adjoint(mb.M), x[mb.τ])
         yy[mb.σ, Threads.threadid()] .+= cc[1:size(mb.M, 2), Threads.threadid()]
     end

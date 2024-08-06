@@ -3,6 +3,7 @@ using ClusterTrees
 using LinearMaps
 using LinearAlgebra
 using ProgressMeter
+using FLoops
 using ThreadsX
 
 
@@ -38,13 +39,13 @@ end
     cc = zeros(eltype(y), size(A, 1), Threads.nthreads())
     yy = zeros(eltype(y), size(A, 1), Threads.nthreads())
 
-    @threads for mb in A.nears
+    ThreadsX.foreach(A.nears) do mb
         mul!(cc[1:size(mb.M, 1), Threads.threadid()], mb.M, x[mb.σ])
         yy[mb.τ, Threads.threadid()] .+= cc[1:size(mb.M,1), Threads.threadid()]
         mul!(cc[1:size(mb.M, 2), Threads.threadid()], transpose(mb.M), x[mb.τ])
         yy[mb.σ, Threads.threadid()] .+= cc[1:size(mb.M,2), Threads.threadid()]
     end
-    @threads for mb in A.self
+    ThreadsX.foreach(A.self) do mb
         mul!(cc[1:size(mb.M, 1), Threads.threadid()], mb.M, x[mb.σ])
         yy[mb.τ, Threads.threadid()] .+= cc[1:size(mb.M,1), Threads.threadid()]
     end
@@ -76,13 +77,13 @@ end
     cc = zeros(eltype(y), size(A, 2), Threads.nthreads())
     yy = zeros(eltype(y), size(A, 2), Threads.nthreads())
 
-    @threads for mb in A.lmap.nears
+    ThreadsX.foreach(A.lmap.nears) do mb
         mul!(cc[1:size(mb.M, 2), Threads.threadid()], adjoint(mb.M), x[mb.τ])
         yy[mb.σ, Threads.threadid()] .+= cc[1:size(mb.M, 2), Threads.threadid()]
         mul!(cc[1:size(mb.M, 1), Threads.threadid()], transpose(adjoint(mb.M)), x[mb.σ])
         yy[mb.τ, Threads.threadid()] .+= cc[1:size(mb.M, 1), Threads.threadid()]
     end
-    @threads for mb in A.lmap.self
+    ThreadsX.foreach(A.lmap.self) do mb
         mul!(cc[1:size(mb.M, 2), Threads.threadid()], adjoint(mb.M), x[mb.τ])
         yy[mb.σ, Threads.threadid()] .+= cc[1:size(mb.M,2), Threads.threadid()]
     end

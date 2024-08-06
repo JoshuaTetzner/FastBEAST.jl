@@ -11,19 +11,18 @@ include("aca/convergence.jl")
 include("aca/aca.jl")
 include("skeletons.jl")
 include("blockassembler.jl")
-include("blockcompressor.jl")
+
 include("hmatrix.jl")
 include("utils.jl")
 include("fmm.jl")
 include("beast.jl")
 include("fmm/operators/FMMoperator.jl")
-
-#include("h2matrix/h2matrix.jl")
-#include("h2matrix/fars.jl")
+include("hmatrix/hmatrix.jl")
 
 include("blockassembler/galerkinblkassembler.jl")
 include("blockassembler/petrovgalerkinblkassembler.jl")
 
+export HM
 export KMeansTreeOptions
 export BoxTreeOptions
 export create_tree
@@ -37,14 +36,13 @@ export MatrixBlock, LowRankMatrix
 
 export assemblefullblocks
 
-export HMatrix
-export buildhmatrix
+#export HMatrix
 export adjoint
 export estimate_norm
 export estimate_reldifference
 export nnz
 export compressionrate
 
-export hassemble
+#export hassemble
 export fmmassemble
 end

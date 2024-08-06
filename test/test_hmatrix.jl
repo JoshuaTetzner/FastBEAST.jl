@@ -50,7 +50,7 @@ ttree = create_tree(tpoints, KMeansTreeOptions(nmin=20))
 kmat = assembler(OneoverRkernel, tpoints, spoints)
 
 for multithreading in [true, false]
-    hmat = HMatrix(
+    hmat = HMatrix.assemble(
         OneoverRkernelassembler,
         ClusterTrees.BlockTrees.BlockTree(ttree,stree),
         Int64,
