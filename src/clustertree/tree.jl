@@ -32,7 +32,7 @@ end
 function isfar(
     testnode::ClusterTrees.LevelledTrees.HNode{D}, 
     trialnode::ClusterTrees.LevelledTrees.HNode{D};
-    η=2.0
+    η=1.0
 ) where D
     test_center = testnode.node.data.ct
     test_radius =  testnode.node.data.hs
@@ -51,7 +51,7 @@ end
 function isnear(
     testnode::ClusterTrees.LevelledTrees.HNode{D}, 
     trialnode::ClusterTrees.LevelledTrees.HNode{D};
-    η=2.0
+    η=1.0
 ) where D
     test_center = testnode.node.data.ct
     test_radius =  testnode.node.data.hs
@@ -75,7 +75,7 @@ function listnearfarinteractions(
     nears::Vector{Tuple{Int,Int}},
     fars::Vector{Vector{Tuple{Int,Int}}},
     level::Int;
-    η=1.5
+    η=1.0
 ) where {T}
     isfar(state[1], state[2], η=η) && (push!(fars[level], block); return nothing)
     !ClusterTrees.haschildren(block_tree, block) && (push!(nears, block); return nothing)
@@ -90,7 +90,7 @@ function listnearfarinteractions(
 end
 
 
-function computeinteractions(tree::ClusterTrees.BlockTrees.BlockTree{T}; η=1.5) where {T}
+function computeinteractions(tree::ClusterTrees.BlockTrees.BlockTree{T}; η=1.0) where {T}
     nears = Tuple{Int,Int}[]
     num_levels = length(tree.test_cluster.levels)
     fars = [Tuple{Int,Int}[] for l in 1:num_levels]
