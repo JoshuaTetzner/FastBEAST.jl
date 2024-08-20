@@ -29,30 +29,23 @@ k = 2*π/λ
 ω = k*c
 η = sqrt(μ/ε)
 
-Γ = CompScienceMeshes.read_gmsh_mesh(pwd()*"/U/geo/U_"*ARGS[3]*".msh")
+h = parse(Float64, ARGS[2])
+Γ = CompScienceMeshes.meshsphere(1.0, h)
 
-𝓚 = Maxwell3D.doublelayer(wavenumber=k)
-
+op = Maxwell3D.doublelayer(wavenumber=k)
 X = raviartthomas(Γ)
 Y = buffachristiansen(Γ)
 
-piv = FastBEAST.FillDistance(Y.pos)
-if ARGS[1] == "thiswork"
-    println("This Work")
-    piv = FastBEAST.EnforcedPivoting(Y.pos)
-elseif ARGS[1] == "max"
-    println("Max Pivoting")
-    piv = FastBEAST.MaxPivoting()
+if ARGS[1] == "EFIE"
+    Y = raviartthomas(Γ)
+    op = Maxwell3D.singlelayer(wavenumber=k)
 end
 
-conv = FastBEAST.Combined(scalartype(𝓚))
-if ARGS[2] == "scc"
-    println("Standard Convergence")
-    conv = FastBEAST.Standard()
-end
+piv = FastBEAST.MaxPivoting()
+conv = FastBEAST.Standard()
 
 K_bc = hassemble(
-    𝓚,
+    op,
     Y,
     X,
     treeoptions=BoxTreeOptions(nmin=100),
@@ -63,23 +56,31 @@ K_bc = hassemble(
     multithreading=true
 )
 
-A_MFIE = assemble(𝓚, Y, X)
-matErr_MFIE = norm(A_MFIE - fullmat(K_bc))/norm(A_MFIE)
+A = assemble(op, Y, X)
+matErr = norm(A - fullmat(K_bc))/norm(A)
+
+lrbhmat = zeros(ComplexF64, size(A, 1), size(A, 2))
+lrbmat = zeros(ComplexF64, size(A, 1), size(A, 2))
+for lrb in K_bc.lowrankblocks
+    lrbhmat[lrb.τ, lrb.σ] = lrb.M.U*lrb.M.V
+    lrbmat[lrb.τ, lrb.σ] = A[lrb.τ, lrb.σ]
+end
+lrberr = norm(lrbhmat-lrbmat)/norm(lrbmat)
 
 results = Dates.format(now(), "yyyy-mm-dd HH:MM:SS") * "\n"
-results = results * "U; pivoting: " * ARGS[1] * ", convergence: " * ARGS[2] * ", h: " * ARGS[3]
-results = results * "\nN \t storage in GB \t compression \t" * "rel matrix error\n" 
+results = results * "sphere " * ARGS[1] * "; pivoting: MaxPivoting, convergence: Standard, h: " * ARGS[2]
+results = results * "\nN \t storage in GB \t compression \t" * "rel matrix error\t" * "rel compressed matrix error\n" 
 #---------------------------------------
 # Write data
 #---------------------------------------
-file = open(pwd() * "/U/results_U.txt", "r")
+file = open(pwd() * "/spherefars/results_spherefars.txt", "r")
 oldresults = read(file, String)
 close(file)
-file = open(pwd() * "/U/results_U.txt", "w")
+file = open(pwd() * "/spherefars/results_spherefars.txt", "w")
 results = oldresults * results * string(length(Y.pos)) * "\t" * 
     string(FastBEAST.storage(K_bc)) * "\t" * 
     string(FastBEAST.compressionrate(K_bc)) * "\t" * 
-    string(matErr_MFIE) * "\n \n"
+    string(matErr) * "\t" * string(lrberr) * "\n \n"
 write(file, results)
 close(file)
 #--------------------------------------

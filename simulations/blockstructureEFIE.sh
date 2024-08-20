@@ -1,0 +1,1 @@
+julia --threads=16 blockstructure/blockstructureEFIEcmd.jl 0.1

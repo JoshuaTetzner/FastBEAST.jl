@@ -6,7 +6,7 @@ julia --threads=XX /path/namecmd.jl argument1 argument2 argument3
 ```
 To run all simulations for on geometry at once we provide in addition bash scripts.
 We note that either the FastBEAST.jl environment must be used or the provided Project.toml be activated.
-Since FastBEAST.jl is not yet registered it should be added by
+
 ```
 julia> ] dev https://github.com/FastBEAST/FastBEAST.jl.git
 ```

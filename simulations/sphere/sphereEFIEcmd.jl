@@ -29,31 +29,19 @@ k = 2*π/λ
 ω = k*c
 η = sqrt(μ/ε)
 
-Γ = CompScienceMeshes.read_gmsh_mesh(pwd()*"/U/geo/U_"*ARGS[3]*".msh")
+h = parse(Float64, ARGS[1])
+Γ = CompScienceMeshes.meshsphere(1.0, h)
 
-𝓚 = Maxwell3D.doublelayer(wavenumber=k)
+T = Maxwell3D.singlelayer(wavenumber=k)
 
 X = raviartthomas(Γ)
-Y = buffachristiansen(Γ)
 
-piv = FastBEAST.FillDistance(Y.pos)
-if ARGS[1] == "thiswork"
-    println("This Work")
-    piv = FastBEAST.EnforcedPivoting(Y.pos)
-elseif ARGS[1] == "max"
-    println("Max Pivoting")
-    piv = FastBEAST.MaxPivoting()
-end
+piv = FastBEAST.MaxPivoting()
+conv = FastBEAST.Standard()
 
-conv = FastBEAST.Combined(scalartype(𝓚))
-if ARGS[2] == "scc"
-    println("Standard Convergence")
-    conv = FastBEAST.Standard()
-end
-
-K_bc = hassemble(
-    𝓚,
-    Y,
+T_bc = hassemble(
+    T,
+    X,
     X,
     treeoptions=BoxTreeOptions(nmin=100),
     compressor=FastBEAST.ACAOptions(
@@ -63,19 +51,19 @@ K_bc = hassemble(
     multithreading=true
 )
 
-A_MFIE = assemble(𝓚, Y, X)
-matErr_MFIE = norm(A_MFIE - fullmat(K_bc))/norm(A_MFIE)
+A_EFIE = assemble(T, X, X)
+matErr_MFIE = norm(A_EFIE - fullmat(T_bc))/norm(A_EFIE)
 
 results = Dates.format(now(), "yyyy-mm-dd HH:MM:SS") * "\n"
-results = results * "U; pivoting: " * ARGS[1] * ", convergence: " * ARGS[2] * ", h: " * ARGS[3]
+results = results * "sphere EFIE; pivoting: MaxPivoting, convergence: Standard, h: " * ARGS[1]
 results = results * "\nN \t storage in GB \t compression \t" * "rel matrix error\n" 
 #---------------------------------------
 # Write data
 #---------------------------------------
-file = open(pwd() * "/U/results_U.txt", "r")
+file = open(pwd() * "/sphere/results_sphereEFIE.txt", "r")
 oldresults = read(file, String)
 close(file)
-file = open(pwd() * "/U/results_U.txt", "w")
+file = open(pwd() * "/sphere/results_sphereEFIE.txt", "w")
 results = oldresults * results * string(length(Y.pos)) * "\t" * 
     string(FastBEAST.storage(K_bc)) * "\t" * 
     string(FastBEAST.compressionrate(K_bc)) * "\t" * 
