@@ -8,5 +8,4 @@ docs/build/
 docs/site/
 Manifest.toml
 *.dat
-*.msh
 lcov.info
