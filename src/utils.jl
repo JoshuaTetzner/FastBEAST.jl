@@ -46,3 +46,4 @@ function estimate_reldifference(hmat::H, refmat; tol=1e-4) where {F, H <: Linear
 
     return sqrt(σnew)/norm_refmat
 end
+

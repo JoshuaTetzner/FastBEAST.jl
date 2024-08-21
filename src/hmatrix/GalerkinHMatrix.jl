@@ -6,7 +6,7 @@ struct GalerkinHMatrix{
     nearinteractions::NearInteractionType
     farinteractions::FarInteractionType
     dim::Tuple{I, I}
-    multithreading::Bool
+    ismultithreaded::Bool
 
     function GalerkinHMatrix{I, K}(
         nearinteractions,
@@ -41,7 +41,7 @@ function GalerkinHMatrix(
     tree=FastBEAST.create_tree(space.pos, FastBEAST.BoxTreeoptions()),
     η=1.0,
     nearquadstrat=BEAST.defaultquadstrat(operator, space, space),
-    farquadstrat=BEAST.DoubleNumQStrat(2, 2),
+    farquadstrat=BEAST.DoubleNumQStrat(2, 3),
     compressor=FastBEAST.ACAOptions(; tol=1e-4),
     multithreading=true,
     verbose=false
@@ -117,9 +117,17 @@ end
     fill!(y, zero(eltype(y)))
 
     mul!(y, A.nearinteractions, x)
-    @floop for lrb in A.farinteractions
-        y[lrb.τ] += lrb.M * x[lrb.σ]
+
+    _foreach = A.ismultithreaded ? ThreadsX.foreach : Base.foreach
+    cc = zeros(eltype(y), size(A, 1), Threads.nthreads())
+    yy = zeros(eltype(y), size(A, 1), Threads.nthreads())
+    _foreach(A.farinteractions) do lrb
+        mul!(cc[1:size(lrb.M, 1)], lrb.M, x[lrb.σ])
+        yy[lrb.τ, Threads.threadid()] .+= cc[1:size(lrb.M, 1), Threads.threadid()]
+        mul!(cc[1:size(lrb.M, 2)], transpose(lrb.M), x[lrb.τ])
+        yy[lrb.σ, Threads.threadid()] .+= cc[1:size(lrb.M, 2), Threads.threadid()]
     end
 
+    y .+= sum(yy, dims=2)
     return y
 end

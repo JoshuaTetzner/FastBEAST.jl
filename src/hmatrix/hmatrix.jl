@@ -11,5 +11,6 @@ module HM
 
     include("GalerkinHMatrix.jl")
     include("PetrovGalerkinHMatrix.jl")
+    include("AbstractHMatrix.jl")
     
 end
