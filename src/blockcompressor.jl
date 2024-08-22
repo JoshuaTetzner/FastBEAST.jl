@@ -1,14 +1,15 @@
 function getcompressedmatrix(
-    kernelfunction::KernelFunction,
+    kernelfunction::Union{FastBEAST.KernelMatrix{K},FastBEAST.GalerkinKernelMatrix{K}},
     testidcs,
     trialidcs,
     ::Type{I},
     ::Type{K},
     am;
     compressor=ACAOptions()
-) where {I,K}
+) where {I, K}
 
-    lm = LazyMatrix(kernelfunction.fct, testidcs, trialidcs, K)
+    fct(mat, x, y) = kernelfunction(mat, x, y)
+    lm = LazyMatrix(fct, testidcs, trialidcs, K)
 
     maxrank = compressor.maxrank
     maxrank == 0 && Int(round(length(lm.τ) * length(lm.σ) / (length(lm.τ) + length(lm.σ))))

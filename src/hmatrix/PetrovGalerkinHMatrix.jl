@@ -110,17 +110,16 @@ end
     LinearMaps.check_dim_mul(y, A, x)
 
     fill!(y, zero(eltype(y)))
-
     mul!(y, A.nearinteractions, x)
-
+    
     _foreach = A.ismultithreaded ? ThreadsX.foreach : Base.foreach
     cc = zeros(eltype(y), size(A, 1), Threads.nthreads())
     yy = zeros(eltype(y), size(A, 1), Threads.nthreads())
-    _foreach(A.farinteractions) do lrb
-        mul!(cc[1:size(lrb.M, 1)], lrb.M, x[lrb.σ])
-        yy[lrb.τ, Threads.threadid()] .+= cc[1:size(lrb.M, 1), Threads.threadid()]
+    _foreach(A.farinteractions) do far
+        mul!(cc[1:size(far.M, 1)], far.M, x[far.σ])
+        yy[far.τ, Threads.threadid()] .+= cc[1:size(far.M, 1), Threads.threadid()]
     end
-
     y .+= sum(yy, dims=2)
+
     return y
 end

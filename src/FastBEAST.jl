@@ -16,11 +16,15 @@ include("hmatrix.jl")
 include("utils.jl")
 include("fmm.jl")
 include("beast.jl")
+include("kernelmatrix.jl")
 include("fmm/operators/FMMoperator.jl")
 include("hmatrix/hmatrix.jl")
+include("blockcompressor.jl")
 
 include("blockassembler/galerkinblkassembler.jl")
 include("blockassembler/petrovgalerkinblkassembler.jl")
+include("blockassembler/kernelblkassembler.jl")
+
 
 export HM
 export KMeansTreeOptions
